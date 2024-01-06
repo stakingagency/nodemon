@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	AppVersion = "v0.0.0"
+	AppVersion string
 )
 
 const (
