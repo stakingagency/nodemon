@@ -14,7 +14,10 @@ import (
 	"github.com/stakingagency/nodemon/utils"
 )
 
-var log = logger.GetOrCreate("nodemon")
+var (
+	log        = logger.GetOrCreate("nodemon")
+	appVersion = "v0.0.0"
+)
 
 func main() {
 	err := startLogger()
@@ -23,7 +26,8 @@ func main() {
 		os.Exit(1)
 	}
 
-	log.Info(os.Args[0], "version", utils.AppVersion)
+	log.Info(os.Args[0], "version", appVersion)
+	utils.AppVersion = appVersion
 
 	appCfg, err := config.LoadNodeMonConfig("config.json")
 	if err != nil {
