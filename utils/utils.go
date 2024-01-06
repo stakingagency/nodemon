@@ -15,10 +15,17 @@ var (
 )
 
 const (
-	LISTEN_NODESMON_ROOT  = "/nodesmon"
-	LISTEN_HOST_INFO      = LISTEN_NODESMON_ROOT + "/hostInfo"
-	LISTEN_HOST_RESOURCES = LISTEN_NODESMON_ROOT + "/hostResources"
-	LISTEN_NODE_INFO      = LISTEN_NODESMON_ROOT + "/nodeInfo"
+	LISTEN_NODESMON_ROOT    = "/nodesmon"
+	LISTEN_HOST_INFO        = LISTEN_NODESMON_ROOT + "/hostInfo"
+	LISTEN_HOST_RESOURCES   = LISTEN_NODESMON_ROOT + "/hostResources"
+	LISTEN_NODE_INFO        = LISTEN_NODESMON_ROOT + "/nodeInfo"
+	LISTEN_HOST_TASKS       = LISTEN_NODESMON_ROOT + "/getTasks"
+	LISTEN_HOST_TASK_RESULT = LISTEN_NODESMON_ROOT + "/sendTaskResult"
+
+	HOST_CMD_REBOOT     = "reboot"
+	HOST_CMD_UPDATE_APP = "updateApp"
+	HOST_CMD_UPDATE_OS  = "updateOS"
+	HOST_CMD_EXEC       = "exec"
 )
 
 func PostHTTP(address, body string, timeout ...time.Duration) ([]byte, error) {

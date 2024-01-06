@@ -5,6 +5,7 @@ import (
 )
 
 type HostInfo struct {
+	AppVersion    string            `json:"appVersion"`
 	TelegramID    int64             `json:"telegramID"`
 	HostID        string            `json:"hostID"`
 	Nodes         []string          `json:"nodes"`

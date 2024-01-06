@@ -1,7 +1,11 @@
 package systemWatcher
 
 import (
+	"context"
+	"encoding/json"
+	"errors"
 	"os"
+	"os/exec"
 	"strings"
 	"time"
 
@@ -84,6 +88,7 @@ func NewSystemWatcher(appCfg *data.NodeMonAppConfig) (*SystemWatcher, error) {
 	s := &SystemWatcher{
 		appCfg: appCfg,
 		hostInfo: &data.HostInfo{
+			AppVersion:    utils.AppVersion,
 			TelegramID:    appCfg.TelegramID,
 			HostID:        pc.HostID,
 			Nodes:         make([]string, 0),
@@ -133,6 +138,7 @@ func getDiskInfo(path string) (uint64, float64, error) {
 
 func (sw *SystemWatcher) StartTasks() {
 	go sw.watchResources()
+	go sw.getTasks()
 }
 
 func (sw *SystemWatcher) watchResources() {
@@ -229,5 +235,59 @@ func (sw *SystemWatcher) RemoveNode(node string) {
 			sw.hostInfo.Nodes = append(sw.hostInfo.Nodes[:i], sw.hostInfo.Nodes[i+1:]...)
 			return
 		}
+	}
+}
+
+func (sw *SystemWatcher) getTasks() {
+	for {
+		bytes, err := utils.GetHTTP(sw.appCfg.Server+utils.LISTEN_HOST_TASKS, "")
+		if err != nil {
+			log.Error("get tasks", "error", err)
+			time.Sleep(time.Second)
+			continue
+		}
+
+		tasks := make([]string, 0)
+		err = json.Unmarshal(bytes, &tasks)
+		if err != nil {
+			log.Error("get tasks - unmarshal", "error", err, "data", string(bytes))
+			time.Sleep(time.Second)
+			continue
+		}
+
+		for _, task := range tasks {
+			parts := strings.Split(task, " ")
+			var err error
+			res := &data.TaskResult{
+				Task:   task,
+				Output: make([]byte, 0),
+			}
+
+			switch parts[0] {
+			case utils.HOST_CMD_REBOOT:
+				err = utils.RebootHost()
+
+			case utils.HOST_CMD_UPDATE_OS:
+				err = utils.UpdateOS()
+
+			case utils.HOST_CMD_UPDATE_APP:
+				err = utils.SelfUpdate("github.com/stakingagency/nodemon/cmd/nodemon")
+
+			case utils.HOST_CMD_EXEC:
+				output := make([]byte, 0)
+				err = errors.New("no command specified")
+				if len(parts) > 1 {
+					output, err = exec.CommandContext(context.Background(), parts[0], parts[1:]...).Output()
+				}
+				res.Output = output
+			}
+
+			if err != nil {
+				res.Error = err.Error()
+			}
+			utils.PostJsonHTTP(sw.appCfg.Server+utils.LISTEN_HOST_TASK_RESULT, res)
+		}
+
+		time.Sleep(time.Minute)
 	}
 }
