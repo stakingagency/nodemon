@@ -11,6 +11,7 @@ import (
 	"github.com/multiversx/mx-chain-logger-go/file"
 	"github.com/stakingagency/nodemon/config"
 	"github.com/stakingagency/nodemon/nodesMonitor"
+	"github.com/stakingagency/nodemon/utils"
 )
 
 var log = logger.GetOrCreate("nodemon")
@@ -21,6 +22,8 @@ func main() {
 		fmt.Println(err)
 		os.Exit(1)
 	}
+
+	log.Info(os.Args[0], "version", utils.AppVersion)
 
 	appCfg, err := config.LoadNodeMonConfig("config.json")
 	if err != nil {
