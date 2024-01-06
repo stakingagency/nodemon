@@ -127,3 +127,9 @@ type NodeLocalInfo struct {
 
 	ManagedKeys []string `json:"managedKeys"`
 }
+
+type TaskResult struct {
+	Task   string `json:"command"`
+	Output []byte `json:"output"`
+	Error  string `json:"error"`
+}
