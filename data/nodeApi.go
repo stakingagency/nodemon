@@ -129,6 +129,7 @@ type NodeLocalInfo struct {
 }
 
 type TaskResult struct {
+	HostID string `json:"hostID"`
 	Task   string `json:"command"`
 	Output []byte `json:"output"`
 	Error  string `json:"error"`

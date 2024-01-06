@@ -247,6 +247,7 @@ func (sw *SystemWatcher) executeTasks(tasks []string) {
 		parts := strings.Split(task, " ")
 		var err error
 		res := &data.TaskResult{
+			HostID: sw.hostInfo.HostID,
 			Task:   task,
 			Output: make([]byte, 0),
 		}
@@ -259,6 +260,7 @@ func (sw *SystemWatcher) executeTasks(tasks []string) {
 			go func(task string) {
 				err := utils.UpdateOS()
 				utils.PostJsonHTTP(sw.appCfg.Server+utils.LISTEN_HOST_TASK_RESULT, &data.TaskResult{
+					HostID: sw.hostInfo.HostID,
 					Task:   task,
 					Output: make([]byte, 0),
 					Error:  err.Error(),
@@ -270,6 +272,7 @@ func (sw *SystemWatcher) executeTasks(tasks []string) {
 			go func(task string) {
 				err := utils.SelfUpdate("github.com/stakingagency/nodemon/cmd/nodemon")
 				utils.PostJsonHTTP(sw.appCfg.Server+utils.LISTEN_HOST_TASK_RESULT, &data.TaskResult{
+					HostID: sw.hostInfo.HostID,
 					Task:   task,
 					Output: make([]byte, 0),
 					Error:  err.Error(),
@@ -285,6 +288,7 @@ func (sw *SystemWatcher) executeTasks(tasks []string) {
 					output, err = exec.CommandContext(context.Background(), parts[0], parts[1:]...).Output()
 				}
 				utils.PostJsonHTTP(sw.appCfg.Server+utils.LISTEN_HOST_TASK_RESULT, &data.TaskResult{
+					HostID: sw.hostInfo.HostID,
 					Task:   task,
 					Output: output,
 					Error:  err.Error(),
