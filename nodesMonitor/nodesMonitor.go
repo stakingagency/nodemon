@@ -21,7 +21,7 @@ type NodesMonitor struct {
 	nodeWatchersMut sync.Mutex
 }
 
-var log = logger.GetOrCreate("nodes-monitor")
+var log = logger.GetOrCreate("nodemon")
 
 func NewNodesMonitor(appCfg *data.NodeMonAppConfig) (*NodesMonitor, error) {
 	sysWatcher, err := systemWatcher.NewSystemWatcher(appCfg)

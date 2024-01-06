@@ -8,13 +8,18 @@ import (
 	"io"
 	"net/http"
 	"time"
+
+	logger "github.com/multiversx/mx-chain-logger-go"
 )
 
 var (
 	AppVersion string
+	log        = logger.GetOrCreate("nodemon-utils")
 )
 
 const (
+	GITHUB_REPO = "github.com/stakingagency/nodemon/cmd/nodemon"
+
 	LISTEN_NODESMON_ROOT    = "/nodesmon"
 	LISTEN_HOST_INFO        = LISTEN_NODESMON_ROOT + "/hostInfo"
 	LISTEN_HOST_RESOURCES   = LISTEN_NODESMON_ROOT + "/hostResources"
