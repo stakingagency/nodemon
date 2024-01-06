@@ -1,6 +1,6 @@
 module github.com/stakingagency/nodemon
 
-go 1.21.0
+go 1.20
 
 require (
 	github.com/multiversx/mx-chain-logger-go v1.0.13
