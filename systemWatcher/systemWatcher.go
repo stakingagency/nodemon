@@ -137,11 +137,10 @@ func getDiskInfo(path string) (uint64, float64, error) {
 }
 
 func (sw *SystemWatcher) StartTasks() {
-	go sw.watchResources()
-	go sw.getTasks()
+	go sw.watchResourcesAndGetTasks()
 }
 
-func (sw *SystemWatcher) watchResources() {
+func (sw *SystemWatcher) watchResourcesAndGetTasks() {
 	_, err := utils.PostJsonHTTP(sw.appCfg.Server+utils.LISTEN_HOST_INFO, sw.hostInfo)
 	if err != nil {
 		log.Error("send host info", "error", err)
@@ -197,7 +196,7 @@ func (sw *SystemWatcher) watchResources() {
 			shouldResendHost = true
 		}
 
-		_, err = utils.PostJsonHTTP(sw.appCfg.Server+utils.LISTEN_HOST_RESOURCES, sw.usage)
+		bytes, err := utils.PostJsonHTTP(sw.appCfg.Server+utils.LISTEN_HOST_RESOURCES, sw.usage)
 		if err == nil {
 			log.Info("sent resources usage", "usage", sw.usage)
 			if shouldResendHost {
@@ -206,6 +205,11 @@ func (sw *SystemWatcher) watchResources() {
 					shouldResendHost = false
 					lastUpdateHost = now
 				}
+			}
+			tasks := make([]string, 0)
+			err = json.Unmarshal(bytes, &tasks)
+			if err == nil && len(tasks) > 0 {
+				sw.executeTasks(tasks)
 			}
 			time.Sleep(time.Minute)
 		} else {
@@ -238,56 +242,60 @@ func (sw *SystemWatcher) RemoveNode(node string) {
 	}
 }
 
-func (sw *SystemWatcher) getTasks() {
-	for {
-		bytes, err := utils.GetHTTP(sw.appCfg.Server+utils.LISTEN_HOST_TASKS, "")
-		if err != nil {
-			log.Error("get tasks", "error", err)
-			time.Sleep(time.Second)
-			continue
+func (sw *SystemWatcher) executeTasks(tasks []string) {
+	for _, task := range tasks {
+		parts := strings.Split(task, " ")
+		var err error
+		res := &data.TaskResult{
+			Task:   task,
+			Output: make([]byte, 0),
 		}
 
-		tasks := make([]string, 0)
-		err = json.Unmarshal(bytes, &tasks)
-		if err != nil {
-			log.Error("get tasks - unmarshal", "error", err, "data", string(bytes))
-			time.Sleep(time.Second)
+		switch parts[0] {
+		case utils.HOST_CMD_REBOOT:
+			err = utils.RebootHost()
+
+		case utils.HOST_CMD_UPDATE_OS:
+			go func(task string) {
+				err := utils.UpdateOS()
+				utils.PostJsonHTTP(sw.appCfg.Server+utils.LISTEN_HOST_TASK_RESULT, &data.TaskResult{
+					Task:   task,
+					Output: make([]byte, 0),
+					Error:  err.Error(),
+				})
+			}(task)
 			continue
-		}
 
-		for _, task := range tasks {
-			parts := strings.Split(task, " ")
-			var err error
-			res := &data.TaskResult{
-				Task:   task,
-				Output: make([]byte, 0),
-			}
+		case utils.HOST_CMD_UPDATE_APP:
+			go func(task string) {
+				err := utils.SelfUpdate("github.com/stakingagency/nodemon/cmd/nodemon")
+				utils.PostJsonHTTP(sw.appCfg.Server+utils.LISTEN_HOST_TASK_RESULT, &data.TaskResult{
+					Task:   task,
+					Output: make([]byte, 0),
+					Error:  err.Error(),
+				})
+			}(task)
+			continue
 
-			switch parts[0] {
-			case utils.HOST_CMD_REBOOT:
-				err = utils.RebootHost()
-
-			case utils.HOST_CMD_UPDATE_OS:
-				err = utils.UpdateOS()
-
-			case utils.HOST_CMD_UPDATE_APP:
-				err = utils.SelfUpdate("github.com/stakingagency/nodemon/cmd/nodemon")
-
-			case utils.HOST_CMD_EXEC:
+		case utils.HOST_CMD_EXEC:
+			go func(task string) {
 				output := make([]byte, 0)
-				err = errors.New("no command specified")
+				err := errors.New("no command specified")
 				if len(parts) > 1 {
 					output, err = exec.CommandContext(context.Background(), parts[0], parts[1:]...).Output()
 				}
-				res.Output = output
-			}
-
-			if err != nil {
-				res.Error = err.Error()
-			}
-			utils.PostJsonHTTP(sw.appCfg.Server+utils.LISTEN_HOST_TASK_RESULT, res)
+				utils.PostJsonHTTP(sw.appCfg.Server+utils.LISTEN_HOST_TASK_RESULT, &data.TaskResult{
+					Task:   task,
+					Output: output,
+					Error:  err.Error(),
+				})
+			}(task)
+			continue
 		}
 
-		time.Sleep(time.Minute)
+		if err != nil {
+			res.Error = err.Error()
+		}
+		utils.PostJsonHTTP(sw.appCfg.Server+utils.LISTEN_HOST_TASK_RESULT, res)
 	}
 }
