@@ -2,7 +2,6 @@ package data
 
 import (
 	"sync"
-	"time"
 )
 
 type HostInfo struct {
@@ -38,72 +37,10 @@ type ResourcesUsage struct {
 	DisksMut    sync.Mutex
 }
 
-type FullHostInfo struct {
-	HostInfo       *HostInfo                 `json:"hostInfo"`
-	ResourcesUsage *ResourcesUsage           `json:"resourcesUsage"`
-	Nodes          map[string]*NodeLocalInfo `json:"nodes"`
-	NodesMut       sync.Mutex
-}
-
 func (hi *HostInfo) GetName() string {
 	if hi.Name != "" {
 		return hi.Name
 	}
 
 	return hi.HostID
-}
-
-func (fhi *FullHostInfo) GetAllNodes() map[string]*NodeLocalInfo {
-	res := make(map[string]*NodeLocalInfo)
-	fhi.NodesMut.Lock()
-	for k, v := range fhi.Nodes {
-		res[k] = v
-	}
-	fhi.NodesMut.Unlock()
-
-	return res
-}
-
-func (fhi *FullHostInfo) GetNodeByListenInterface(listenInterface string) *NodeLocalInfo {
-	fhi.NodesMut.Lock()
-	defer fhi.NodesMut.Unlock()
-
-	return fhi.Nodes[listenInterface]
-}
-
-func (fhi *FullHostInfo) AddNode(node *NodeLocalInfo) {
-	fhi.NodesMut.Lock()
-	fhi.Nodes[node.ListenInterface] = node
-	fhi.NodesMut.Unlock()
-}
-
-func (fhi *FullHostInfo) RemoveNode(node *NodeLocalInfo) {
-	fhi.NodesMut.Lock()
-	delete(fhi.Nodes, node.ListenInterface)
-	fhi.NodesMut.Unlock()
-}
-
-func (fhi *FullHostInfo) GetNodeByKey(key string) *NodeLocalInfo {
-	fhi.NodesMut.Lock()
-	defer fhi.NodesMut.Unlock()
-
-	for _, node := range fhi.Nodes {
-		if node.Pubkey == key {
-			return node
-		}
-	}
-
-	return nil
-}
-
-func (fhi *FullHostInfo) UpdateNode(nodeInfo *NodeLocalInfo) {
-	nodeInfo.LastUpdated = time.Now().Unix()
-	fhi.NodesMut.Lock()
-	fhi.Nodes[nodeInfo.ListenInterface] = nodeInfo
-	fhi.NodesMut.Unlock()
-}
-
-func (fhi *FullHostInfo) UpdateResources(resInfo *ResourcesUsage) {
-	resInfo.LastUpdated = time.Now().Unix()
-	fhi.ResourcesUsage = resInfo
 }
