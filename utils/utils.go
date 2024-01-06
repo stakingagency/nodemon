@@ -10,6 +10,10 @@ import (
 	"time"
 )
 
+var (
+	AppVersion = "v0.0.0"
+)
+
 const (
 	LISTEN_NODESMON_ROOT  = "/nodesmon"
 	LISTEN_HOST_INFO      = LISTEN_NODESMON_ROOT + "/hostInfo"
