@@ -270,7 +270,7 @@ func (sw *SystemWatcher) executeTasks(tasks []string) {
 
 		case utils.HOST_CMD_UPDATE_APP:
 			go func(task string) {
-				err := utils.SelfUpdate("github.com/stakingagency/nodemon/cmd/nodemon")
+				err := utils.SelfUpdate(utils.GITHUB_REPO)
 				utils.PostJsonHTTP(sw.appCfg.Server+utils.LISTEN_HOST_TASK_RESULT, &data.TaskResult{
 					HostID: sw.hostInfo.HostID,
 					Task:   task,

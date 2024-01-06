@@ -67,6 +67,7 @@ func SelfUpdate(repoBinaryPath string) error {
 	appName := parts[len(parts)-1]
 	appPath, err := os.Getwd()
 	if err != nil {
+		log.Error("get current path", "error", err)
 		return err
 	}
 
@@ -75,6 +76,7 @@ func SelfUpdate(repoBinaryPath string) error {
 	// get latest tag
 	latestVersion, err := GetLatestVersion(githubRepo)
 	if err != nil {
+		log.Error("get latest version", "error", err)
 		return err
 	}
 
@@ -93,49 +95,59 @@ func SelfUpdate(repoBinaryPath string) error {
 	if exists, _ := pathExists(fullRepoPath); exists {
 		err = os.Chdir(fullRepoPath)
 		if err != nil {
+			log.Error("chdir fullRepoPath", "error", err, "path", fullRepoPath)
 			return err
 		}
 
 		err = exec.CommandContext(context.Background(), "git", "stash").Run()
 		if err != nil {
+			log.Error("run git stash", "error", err, "path", fullRepoPath)
 			return err
 		}
 
 		err = exec.CommandContext(context.Background(), "git", "pull").Run()
 		if err != nil {
+			log.Error("run git pull", "error", err, "path", fullRepoPath)
 			return err
 		}
 	} else {
 		err = os.Chdir(repoPath)
 		if err != nil {
+			log.Error("chdir repoPath", "error", err, "path", repoPath)
 			return err
 		}
 
 		err = exec.CommandContext(context.Background(), "git", "clone", "https://"+repoWithToken, "--branch="+latestVersion, "--single-branch", "--depth=1").Run()
 		if err != nil {
+			log.Error("run git clone", "error", err, "path", repoPath)
 			return err
 		}
 	}
 
 	// build app
-	err = os.Chdir(fullRepoPath + "/" + binaryPath)
+	buildPath := fullRepoPath + "/" + binaryPath
+	err = os.Chdir(buildPath)
 	if err != nil {
+		log.Error("chdir buildPath", "error", err, "path", buildPath)
 		return err
 	}
 
 	tmpFilename := fmt.Sprintf("tmp%v", time.Now().Unix())
 	err = exec.CommandContext(context.Background(), "go", "build", "-v", "-o", tmpFilename, "-ldflags", `-X main.appVersion=`+latestVersion).Run()
 	if err != nil {
+		log.Error("run go build", "error", err, "path", buildPath)
 		return err
 	}
 
 	err = os.Rename(tmpFilename, appPath+"/"+appName)
 	if err != nil {
+		log.Error("rename file", "error", err, "tmpFile", tmpFilename)
 		return err
 	}
 
 	err = os.Chdir(appPath)
 	if err != nil {
+		log.Error("chdir appPath", "error", err, "path", appPath)
 		return err
 	}
 
