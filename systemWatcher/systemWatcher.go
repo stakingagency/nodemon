@@ -259,11 +259,15 @@ func (sw *SystemWatcher) executeTasks(tasks []string) {
 		case utils.HOST_CMD_UPDATE_OS:
 			go func(task string) {
 				err := utils.UpdateOS()
+				strError := ""
+				if err != nil {
+					strError = err.Error()
+				}
 				utils.PostJsonHTTP(sw.appCfg.Server+utils.LISTEN_HOST_TASK_RESULT, &data.TaskResult{
 					HostID: sw.hostInfo.HostID,
 					Task:   task,
 					Output: make([]byte, 0),
-					Error:  err.Error(),
+					Error:  strError,
 				})
 			}(task)
 			continue
@@ -271,11 +275,15 @@ func (sw *SystemWatcher) executeTasks(tasks []string) {
 		case utils.HOST_CMD_UPDATE_APP:
 			go func(task string) {
 				err := utils.SelfUpdate(utils.GITHUB_REPO)
+				strError := ""
+				if err != nil {
+					strError = err.Error()
+				}
 				utils.PostJsonHTTP(sw.appCfg.Server+utils.LISTEN_HOST_TASK_RESULT, &data.TaskResult{
 					HostID: sw.hostInfo.HostID,
 					Task:   task,
 					Output: make([]byte, 0),
-					Error:  err.Error(),
+					Error:  strError,
 				})
 			}(task)
 			continue
@@ -290,11 +298,15 @@ func (sw *SystemWatcher) executeTasks(tasks []string) {
 				if err != nil {
 					log.Error("run command", "error", err, "task", task)
 				}
+				strError := ""
+				if err != nil {
+					strError = err.Error()
+				}
 				utils.PostJsonHTTP(sw.appCfg.Server+utils.LISTEN_HOST_TASK_RESULT, &data.TaskResult{
 					HostID: sw.hostInfo.HostID,
 					Task:   task,
 					Output: output,
-					Error:  err.Error(),
+					Error:  strError,
 				})
 			}(task)
 			continue
