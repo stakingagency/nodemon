@@ -285,7 +285,7 @@ func (sw *SystemWatcher) executeTasks(tasks []string) {
 				output := make([]byte, 0)
 				err := errors.New("no command specified")
 				if len(parts) > 1 {
-					output, err = exec.CommandContext(context.Background(), parts[0], parts[1:]...).Output()
+					output, err = exec.CommandContext(context.Background(), parts[1], parts[2:]...).Output()
 				}
 				utils.PostJsonHTTP(sw.appCfg.Server+utils.LISTEN_HOST_TASK_RESULT, &data.TaskResult{
 					HostID: sw.hostInfo.HostID,
