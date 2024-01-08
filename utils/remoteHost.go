@@ -71,7 +71,25 @@ func SelfUpdate(repoBinaryPath string) error {
 		return err
 	}
 
-	goPath := strings.Split(os.Getenv("GOPATH"), ":")[0]
+	goPath := strings.Split(os.Getenv("GOPATH"), ":")[0] + "/src"
+	if goPath == "" {
+		log.Error("GOPATH not set")
+		return errors.New("GOPATH not set")
+	}
+
+	goBinaryPath := os.Getenv("GOBINARY")
+	if goBinaryPath == "" {
+		output, err := exec.CommandContext(context.Background(), "which", "go").Output()
+		if err == nil && len(output) > 0 {
+			goBinaryPath = strings.TrimSpace(string(output))
+		}
+	} else {
+		goBinaryPath += "/go"
+	}
+	if goBinaryPath == "" {
+		log.Error("GOBINARY not set")
+		return errors.New("GOBINARY not set")
+	}
 
 	// get latest tag
 	latestVersion, err := GetLatestVersion(githubRepo)
@@ -133,7 +151,7 @@ func SelfUpdate(repoBinaryPath string) error {
 	}
 
 	tmpFilename := fmt.Sprintf("tmp%v", time.Now().Unix())
-	err = exec.CommandContext(context.Background(), "go", "build", "-v", "-o", tmpFilename, "-ldflags", `-X main.appVersion=`+latestVersion).Run()
+	err = exec.CommandContext(context.Background(), goBinaryPath, "build", "-v", "-o", tmpFilename, "-ldflags", `-X main.appVersion=`+latestVersion).Run()
 	if err != nil {
 		log.Error("run go build", "error", err, "path", buildPath)
 		return err
