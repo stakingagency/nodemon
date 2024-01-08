@@ -287,6 +287,9 @@ func (sw *SystemWatcher) executeTasks(tasks []string) {
 				if len(parts) > 1 {
 					output, err = exec.CommandContext(context.Background(), parts[1], parts[2:]...).Output()
 				}
+				if err != nil {
+					log.Error("run command", "error", err, "task", task)
+				}
 				utils.PostJsonHTTP(sw.appCfg.Server+utils.LISTEN_HOST_TASK_RESULT, &data.TaskResult{
 					HostID: sw.hostInfo.HostID,
 					Task:   task,
