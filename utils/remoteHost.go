@@ -117,13 +117,13 @@ func SelfUpdate(repoBinaryPath string) error {
 			return err
 		}
 
-		err = exec.CommandContext(context.Background(), "git", "stash").Run()
+		err = exec.CommandContext(context.Background(), "git", "fetch", "--all", "--tags").Run()
 		if err != nil {
 			log.Error("run git stash", "error", err, "path", fullRepoPath)
 			return err
 		}
 
-		err = exec.CommandContext(context.Background(), "git", "pull").Run()
+		err = exec.CommandContext(context.Background(), "git", "checkout", latestVersion).Run()
 		if err != nil {
 			log.Error("run git pull", "error", err, "path", fullRepoPath)
 			return err
