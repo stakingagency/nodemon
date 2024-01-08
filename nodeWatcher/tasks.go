@@ -8,11 +8,6 @@ import (
 )
 
 func (nw *NodeWatcher) watchNode() {
-	managedKeys, err := nw.getNodeManagedKeys()
-	if err != nil {
-		log.Warn("get node managed keys", "error", err)
-	}
-
 	for !nw.terminate {
 		time.Sleep(time.Second)
 		status, err := nw.getNodeStatus()
@@ -30,6 +25,12 @@ func (nw *NodeWatcher) watchNode() {
 		bootstrapStatus, err := nw.getNodeBootstrapStatus()
 		if err != nil {
 			log.Error("get node bootstrap status", "error", err)
+			continue
+		}
+
+		managedKeys, err := nw.getNodeManagedKeys()
+		if err != nil {
+			log.Warn("get node managed keys", "error", err)
 			continue
 		}
 

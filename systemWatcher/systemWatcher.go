@@ -1,7 +1,11 @@
 package systemWatcher
 
 import (
+	"context"
+	"encoding/json"
+	"errors"
 	"os"
+	"os/exec"
 	"strings"
 	"time"
 
@@ -84,6 +88,7 @@ func NewSystemWatcher(appCfg *data.NodeMonAppConfig) (*SystemWatcher, error) {
 	s := &SystemWatcher{
 		appCfg: appCfg,
 		hostInfo: &data.HostInfo{
+			AppVersion:    utils.AppVersion,
 			TelegramID:    appCfg.TelegramID,
 			HostID:        pc.HostID,
 			Nodes:         make([]string, 0),
@@ -132,10 +137,10 @@ func getDiskInfo(path string) (uint64, float64, error) {
 }
 
 func (sw *SystemWatcher) StartTasks() {
-	go sw.watchResources()
+	go sw.watchResourcesAndGetTasks()
 }
 
-func (sw *SystemWatcher) watchResources() {
+func (sw *SystemWatcher) watchResourcesAndGetTasks() {
 	_, err := utils.PostJsonHTTP(sw.appCfg.Server+utils.LISTEN_HOST_INFO, sw.hostInfo)
 	if err != nil {
 		log.Error("send host info", "error", err)
@@ -191,7 +196,7 @@ func (sw *SystemWatcher) watchResources() {
 			shouldResendHost = true
 		}
 
-		_, err = utils.PostJsonHTTP(sw.appCfg.Server+utils.LISTEN_HOST_RESOURCES, sw.usage)
+		bytes, err := utils.PostJsonHTTP(sw.appCfg.Server+utils.LISTEN_HOST_RESOURCES, sw.usage)
 		if err == nil {
 			log.Info("sent resources usage", "usage", sw.usage)
 			if shouldResendHost {
@@ -200,6 +205,11 @@ func (sw *SystemWatcher) watchResources() {
 					shouldResendHost = false
 					lastUpdateHost = now
 				}
+			}
+			tasks := make([]string, 0)
+			err = json.Unmarshal(bytes, &tasks)
+			if err == nil && len(tasks) > 0 {
+				sw.executeTasks(tasks)
 			}
 			time.Sleep(time.Minute)
 		} else {
@@ -229,5 +239,82 @@ func (sw *SystemWatcher) RemoveNode(node string) {
 			sw.hostInfo.Nodes = append(sw.hostInfo.Nodes[:i], sw.hostInfo.Nodes[i+1:]...)
 			return
 		}
+	}
+}
+
+func (sw *SystemWatcher) executeTasks(tasks []string) {
+	for _, task := range tasks {
+		parts := strings.Split(task, " ")
+		var err error
+		res := &data.TaskResult{
+			HostID: sw.hostInfo.HostID,
+			Task:   task,
+			Output: make([]byte, 0),
+		}
+
+		switch parts[0] {
+		case utils.HOST_CMD_REBOOT:
+			err = utils.RebootHost()
+
+		case utils.HOST_CMD_UPDATE_OS:
+			go func(task string) {
+				err := utils.UpdateOS()
+				strError := ""
+				if err != nil {
+					strError = err.Error()
+				}
+				utils.PostJsonHTTP(sw.appCfg.Server+utils.LISTEN_HOST_TASK_RESULT, &data.TaskResult{
+					HostID: sw.hostInfo.HostID,
+					Task:   task,
+					Output: make([]byte, 0),
+					Error:  strError,
+				})
+			}(task)
+			continue
+
+		case utils.HOST_CMD_UPDATE_APP:
+			go func(task string) {
+				err := utils.SelfUpdate(utils.GITHUB_REPO)
+				strError := ""
+				if err != nil {
+					strError = err.Error()
+				}
+				utils.PostJsonHTTP(sw.appCfg.Server+utils.LISTEN_HOST_TASK_RESULT, &data.TaskResult{
+					HostID: sw.hostInfo.HostID,
+					Task:   task,
+					Output: make([]byte, 0),
+					Error:  strError,
+				})
+			}(task)
+			continue
+
+		case utils.HOST_CMD_EXEC:
+			go func(task string) {
+				output := make([]byte, 0)
+				err := errors.New("no command specified")
+				if len(parts) > 1 {
+					output, err = exec.CommandContext(context.Background(), parts[1], parts[2:]...).Output()
+				}
+				if err != nil {
+					log.Error("run command", "error", err, "task", task)
+				}
+				strError := ""
+				if err != nil {
+					strError = err.Error()
+				}
+				utils.PostJsonHTTP(sw.appCfg.Server+utils.LISTEN_HOST_TASK_RESULT, &data.TaskResult{
+					HostID: sw.hostInfo.HostID,
+					Task:   task,
+					Output: output,
+					Error:  strError,
+				})
+			}(task)
+			continue
+		}
+
+		if err != nil {
+			res.Error = err.Error()
+		}
+		utils.PostJsonHTTP(sw.appCfg.Server+utils.LISTEN_HOST_TASK_RESULT, res)
 	}
 }
