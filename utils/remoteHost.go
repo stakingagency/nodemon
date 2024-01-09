@@ -37,8 +37,12 @@ func GetGoVersion() (string, error) {
 	return "", nil
 }
 
-func GetLatestVersion(repo string) (string, error) {
-	bytes, err := GetHTTP(fmt.Sprintf("https://api.github.com/repos/%s/releases/latest", repo), "")
+func GetLatestVersion(repo string, token ...string) (string, error) {
+	githubToken := ""
+	if len(token) > 0 {
+		githubToken = token[0] + "@"
+	}
+	bytes, err := GetHTTP(fmt.Sprintf("https://%sapi.github.com/repos/%s/releases/latest", githubToken, repo), "")
 	if err != nil {
 		return "", err
 	}
