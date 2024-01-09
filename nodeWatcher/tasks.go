@@ -47,7 +47,6 @@ func (nw *NodeWatcher) watchNode() {
 
 			ChainId:                    status.ChainId,
 			DisplayName:                status.DisplayName,
-			Identity:                   nw.identity,
 			Pubkey:                     status.Pubkey,
 			ShardID:                    status.ShardID,
 			NodeType:                   status.NodeType,
@@ -65,6 +64,8 @@ func (nw *NodeWatcher) watchNode() {
 			NetworkSentBps:             status.NetworkSentBps,
 			AccountsSnapshotInProgress: status.AccountsSnapshotInProgress,
 			PeersSnapshotInProgress:    status.PeersSnapshotInProgress,
+
+			Preferences: nw.prefs,
 
 			PeerInfo:          p2pStatus.PeerInfo,
 			UnknownShardPeers: p2pStatus.UnknownShardPeers,

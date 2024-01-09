@@ -100,7 +100,6 @@ type NodeLocalInfo struct {
 
 	ChainId                    string `json:"erd_chain_id"`
 	DisplayName                string `json:"erd_node_display_name"`
-	Identity                   string `json:"identity"`
 	Pubkey                     string `json:"erd_public_key_block_sign"`
 	ShardID                    uint32 `json:"erd_shard_id"`
 	NodeType                   string `json:"erd_node_type"`
@@ -118,6 +117,8 @@ type NodeLocalInfo struct {
 	NetworkSentBps             uint64 `json:"erd_network_sent_bps"`
 	AccountsSnapshotInProgress uint64 `json:"erd_accounts_snapshot_in_progress"`
 	PeersSnapshotInProgress    uint64 `json:"erd_peers_snapshot_in_progress"`
+
+	Preferences *Preferences `json:"preferences"`
 
 	PeerInfo          string `json:"erd_p2p_peer_info"`
 	UnknownShardPeers string `json:"erd_p2p_unknown_shard_peers"`

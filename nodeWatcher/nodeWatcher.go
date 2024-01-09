@@ -1,10 +1,8 @@
 package nodeWatcher
 
 import (
-	"os"
-	"strings"
-
 	logger "github.com/multiversx/mx-chain-logger-go"
+	"github.com/pelletier/go-toml"
 	"github.com/stakingagency/nodemon/data"
 	"github.com/stakingagency/nodemon/systemWatcher"
 )
@@ -14,8 +12,8 @@ type NodeWatcher struct {
 	path            string
 	listenInterface string
 	sysWatcher      *systemWatcher.SystemWatcher
+	prefs           *data.Preferences
 
-	identity  string
 	terminate bool
 }
 
@@ -27,11 +25,10 @@ func NewNodeWatcher(path string, listenInterface string, sysWatcher *systemWatch
 		path:            path,
 		listenInterface: listenInterface,
 		sysWatcher:      sysWatcher,
+		prefs:           &data.Preferences{},
 	}
 
-	n.readIdentity()
-
-	return n, nil
+	return n, n.readNodePrefs()
 }
 
 func (nw *NodeWatcher) StartTasks() {
@@ -46,27 +43,11 @@ func (nw *NodeWatcher) GetListenInterface() string {
 	return nw.listenInterface
 }
 
-func (nw *NodeWatcher) readIdentity() error {
-	bytes, err := os.ReadFile(nw.path + "/config/prefs.toml")
+func (nw *NodeWatcher) readNodePrefs() error {
+	tree, err := toml.LoadFile(nw.path + "/config/prefs.toml")
 	if err != nil {
 		return err
 	}
 
-	lines := strings.Split(string(bytes), "\n")
-	for _, line := range lines {
-		line = strings.TrimSpace(line)
-		if strings.HasPrefix(line, "#") {
-			continue
-		}
-
-		if strings.HasPrefix(strings.ToLower(line), "identity") {
-			parts := strings.Split(line, "=")
-			if len(parts) == 2 {
-				nw.identity = strings.TrimSpace(strings.ReplaceAll(parts[1], "\"", ""))
-				break
-			}
-		}
-	}
-
-	return nil
+	return tree.Unmarshal(nw.prefs)
 }
