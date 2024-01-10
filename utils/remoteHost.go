@@ -110,40 +110,27 @@ func SelfUpdate(repoBinaryPath string) error {
 
 	parts = strings.Split(fullRepoPath, "/")
 	repoPath := strings.Join(parts[:len(parts)-1], "/")
-	os.MkdirAll(repoPath, os.ModePerm)
 
 	defer os.Chdir(appPath)
 
 	if exists, _ := pathExists(fullRepoPath); exists {
-		err = os.Chdir(fullRepoPath)
+		err = exec.CommandContext(context.Background(), "rm", "-rf", repoPath).Run()
 		if err != nil {
-			log.Error("chdir fullRepoPath", "error", err, "path", fullRepoPath)
+			log.Error("rm -rf repoPath", "error", err, "fullRepoPath", fullRepoPath, "repoPath", repoPath)
 			return err
 		}
+	}
+	os.MkdirAll(repoPath, os.ModePerm)
+	err = os.Chdir(repoPath)
+	if err != nil {
+		log.Error("chdir repoPath", "error", err, "path", repoPath)
+		return err
+	}
 
-		err = exec.CommandContext(context.Background(), "git", "fetch", "--all", "--tags").Run()
-		if err != nil {
-			log.Error("run git fetch", "error", err, "path", fullRepoPath)
-			return err
-		}
-
-		err = exec.CommandContext(context.Background(), "git", "checkout", latestVersion).Run()
-		if err != nil {
-			log.Error("run git checkout", "error", err, "path", fullRepoPath)
-			return err
-		}
-	} else {
-		err = os.Chdir(repoPath)
-		if err != nil {
-			log.Error("chdir repoPath", "error", err, "path", repoPath)
-			return err
-		}
-
-		err = exec.CommandContext(context.Background(), "git", "clone", "https://"+repoWithToken, "--branch="+latestVersion, "--single-branch", "--depth=1").Run()
-		if err != nil {
-			log.Error("run git clone", "error", err, "path", repoPath)
-			return err
-		}
+	err = exec.CommandContext(context.Background(), "git", "clone", "https://"+repoWithToken, "--branch="+latestVersion, "--single-branch", "--depth=1").Run()
+	if err != nil {
+		log.Error("run git clone", "error", err, "path", repoPath)
+		return err
 	}
 
 	// build app
