@@ -274,7 +274,7 @@ func (sw *SystemWatcher) executeTasks(tasks []string) {
 
 		case utils.HOST_CMD_UPDATE_APP:
 			go func(task string) {
-				err := utils.SelfUpdate(utils.GITHUB_REPO)
+				err := utils.SelfUpdate(utils.NODEMON_GITHUB_REPO)
 				strError := ""
 				if err != nil {
 					strError = err.Error()

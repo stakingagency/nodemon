@@ -18,7 +18,7 @@ var (
 )
 
 const (
-	GITHUB_REPO = "github.com/stakingagency/nodemon/cmd/nodemon"
+	NODEMON_GITHUB_REPO = "github.com/stakingagency/nodemon/cmd/nodemon"
 
 	LISTEN_NODESMON_ROOT    = "/nodesmon"
 	LISTEN_HOST_INFO        = LISTEN_NODESMON_ROOT + "/hostInfo"
