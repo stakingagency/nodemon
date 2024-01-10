@@ -1,5 +1,7 @@
 package data
 
+import "strings"
+
 type NodeApiStatusResponse struct {
 	Data struct {
 		Metrics *NodeApiStatus `json:"metrics"`
@@ -130,6 +132,16 @@ type NodeLocalInfo struct {
 	TrieSyncNumNodesProcessed uint64 `json:"erd_trie_sync_num_nodes_processed"`
 
 	ManagedKeys []string `json:"managedKeys"`
+}
+
+func (nli *NodeLocalInfo) GetPeerID() string {
+	parts := strings.Split(nli.PeerInfo, ",")
+	parts = strings.Split(parts[0], "/")
+	if len(parts) == 0 {
+		return ""
+	}
+
+	return parts[len(parts)-1]
 }
 
 type TaskResult struct {
