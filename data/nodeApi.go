@@ -118,7 +118,10 @@ type NodeLocalInfo struct {
 	AccountsSnapshotInProgress uint64 `json:"erd_accounts_snapshot_in_progress"`
 	PeersSnapshotInProgress    uint64 `json:"erd_peers_snapshot_in_progress"`
 
-	Prefs *Preferences `json:"preferences"`
+	Prefs             *Preferences `json:"preferences"`
+	ValidatorKey      string       `json:"validatorKey"`
+	AllValidatorsKeys []string     `json:"allValidatorsKeys"`
+	IsMultiKey        bool         `json:"isMultiKey"`
 
 	PeerInfo          string `json:"erd_p2p_peer_info"`
 	UnknownShardPeers string `json:"erd_p2p_unknown_shard_peers"`

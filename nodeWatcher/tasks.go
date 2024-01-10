@@ -65,7 +65,10 @@ func (nw *NodeWatcher) watchNode() {
 			AccountsSnapshotInProgress: status.AccountsSnapshotInProgress,
 			PeersSnapshotInProgress:    status.PeersSnapshotInProgress,
 
-			Prefs: nw.prefs,
+			Prefs:             nw.prefs,
+			ValidatorKey:      nw.validatorKey,
+			AllValidatorsKeys: nw.allValidatorKeys,
+			IsMultiKey:        nw.isMultiKey,
 
 			PeerInfo:          p2pStatus.PeerInfo,
 			UnknownShardPeers: p2pStatus.UnknownShardPeers,
